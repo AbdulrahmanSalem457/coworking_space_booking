@@ -12,9 +12,11 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load by absolute path: under a WSGI server the working directory is not the
+# project root, and a bare load_dotenv() would silently find nothing.
+load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-me")
 DEBUG = os.getenv("DEBUG", "True") == "True"
@@ -157,11 +159,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # plain HTTP is unaffected.
 # ---------------------------------------------------------------------------
 if not DEBUG:
-    # Render terminates TLS at its proxy and forwards this header; without it
+    # Hosts terminate TLS at their proxy and forward this header; without it
     # Django would think every request arrived over plain HTTP and redirect
     # forever.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = True
+
+    # Escape hatch: if a host doesn't forward that header, the redirect above
+    # turns into a loop. Set SECURE_SSL_REDIRECT=False in .env to break it
+    # without editing code.
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True") == "True"
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_CONTENT_TYPE_NOSNIFF = True

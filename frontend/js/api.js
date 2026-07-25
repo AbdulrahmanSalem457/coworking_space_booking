@@ -10,9 +10,11 @@
  * it falls back to the hosted one. Point it somewhere specific by setting the
  * global before this module loads:
  *
- *   <script>window.API_BASE_URL = "https://your-api.onrender.com/api";</script>
+ *   <script>window.API_BASE_URL = "https://username.pythonanywhere.com/api";</script>
+ *
+ * After deploying, change HOSTED_API_URL below to your own API's address.
  */
-const HOSTED_API_URL = "https://coworking-api.onrender.com/api";
+const HOSTED_API_URL = "https://CHANGE-ME.pythonanywhere.com/api";
 const LOCAL_API_URL = "http://127.0.0.1:8000/api";
 
 const isLocalHost = ["localhost", "127.0.0.1", ""].includes(window.location.hostname);

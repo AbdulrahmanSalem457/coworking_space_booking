@@ -136,70 +136,145 @@ local backend, served from anywhere else it calls the hosted one. To point it
 at a specific API, set the global before the module loads:
 
 ```html
-<script>window.API_BASE_URL = "https://your-api.onrender.com/api";</script>
+<script>window.API_BASE_URL = "https://username.pythonanywhere.com/api";</script>
 ```
 
-## Deploying the API
+## Hosting it online
 
-The API is CORS-open, so once it's hosted anyone can call it from their own
-site's JavaScript — no backend of their own required.
+Two free pieces, deployed separately:
 
-### Deploy to Render
+| Part | Host | Result |
+|---|---|---|
+| API (Django) | PythonAnywhere | `https://username.pythonanywhere.com` |
+| Site (HTML/CSS/JS) | GitHub Pages | `https://username.github.io/coworking_space_booking/` |
 
-The repo ships a [`render.yaml`](render.yaml) blueprint that creates the web
-service and a Postgres database together.
+Both serve HTTPS, which matters: a page loaded over HTTPS cannot call an API
+over plain HTTP — browsers block it as mixed content.
 
-1. Push this repo to your GitHub account (already done if you cloned it from
-   there).
-2. Sign in at [render.com](https://render.com) and choose **New → Blueprint**.
-3. Connect the repository. Render reads `render.yaml` and shows what it will
-   create: a free web service plus a free Postgres instance.
-4. It prompts for the three values marked `sync: false` — enter the admin
-   account you want created:
-   - `ADMIN_USERNAME`
-   - `ADMIN_EMAIL`
-   - `ADMIN_PASSWORD`
-5. Click **Apply**. The first build runs
-   [`backend/build.sh`](backend/build.sh): installs dependencies, collects
-   static files, applies migrations, and creates the superuser.
+### Part 1 — the API on PythonAnywhere
 
-When it finishes you get a URL like `https://coworking-api.onrender.com`:
+Sign up for a free "Beginner" account at
+[pythonanywhere.com](https://www.pythonanywhere.com). No card required.
+
+**Clone the repo.** Open a **Bash console** from the Consoles tab:
+
+```bash
+git clone https://github.com/AbdulrahmanSalem457/coworking_space_booking.git
+cd coworking_space_booking/backend
+```
+
+**Create the virtualenv** (3.11 or whichever Python they currently offer):
+
+```bash
+mkvirtualenv --python=/usr/bin/python3.11 coworking
+pip install -r requirements.txt
+```
+
+Note the path it prints — normally `/home/USERNAME/.virtualenvs/coworking`.
+You'll paste it into the Web tab shortly.
+
+**Write the environment file.** Still in `backend/`:
+
+```bash
+cp .env.example .env
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Open `.env` in the Files tab and set:
+
+```
+DEBUG=False
+SECRET_KEY=<the key that was just printed>
+ALLOWED_HOSTS=USERNAME.pythonanywhere.com
+CORS_ALLOWED_ORIGINS=
+TIME_ZONE=Africa/Cairo
+
+ADMIN_USERNAME=<your admin username>
+ADMIN_EMAIL=<your email>
+ADMIN_PASSWORD=<a strong password>
+```
+
+Leaving `CORS_ALLOWED_ORIGINS` empty keeps the API callable from any site.
+
+**Set up the database and static files:**
+
+```bash
+python manage.py migrate
+python manage.py collectstatic --no-input
+python manage.py ensure_admin
+```
+
+**Create the web app.** Web tab → **Add a new web app** → **Manual
+configuration** (*not* the "Django" option — that scaffolds a fresh project) →
+pick the same Python version. Then on that page set:
+
+| Field | Value |
+|---|---|
+| Source code | `/home/USERNAME/coworking_space_booking/backend` |
+| Virtualenv | `/home/USERNAME/.virtualenvs/coworking` |
+
+Under **Static files**, add one mapping:
+
+| URL | Directory |
+|---|---|
+| `/static/` | `/home/USERNAME/coworking_space_booking/backend/staticfiles` |
+
+Click the **WSGI configuration file** link, delete everything in it, and paste
+the contents of [`deploy/pythonanywhere_wsgi.py`](deploy/pythonanywhere_wsgi.py)
+with `USERNAME` replaced. Save, then hit the green **Reload** button.
+
+Your API is now live:
 
 | | |
 |---|---|
-| API root | `https://coworking-api.onrender.com/api/` |
-| Swagger UI | `https://coworking-api.onrender.com/swagger/` |
-| Django admin | `https://coworking-api.onrender.com/admin/` |
+| API root | `https://USERNAME.pythonanywhere.com/api/` |
+| Swagger UI | `https://USERNAME.pythonanywhere.com/swagger/` |
+| Django admin | `https://USERNAME.pythonanywhere.com/admin/` |
 
-Finally, update `HOSTED_API_URL` at the top of
-[`frontend/js/api.js`](frontend/js/api.js) to your real URL — Render appends a
-suffix if the service name is taken, so it may not match the default exactly.
+**To deploy changes later:** in a Bash console, `git pull` inside the repo, then
+press **Reload** on the Web tab. Run `migrate` too if models changed.
 
-### Things to know about the free tier
+### Part 2 — the site on GitHub Pages
 
-- **The service sleeps after ~15 minutes of no traffic.** The next request
-  wakes it and takes roughly a minute to answer. Requests after that are
-  normal speed. Worth mentioning if you're demoing it to someone.
-- **Free Postgres instances expire.** Render shows the expiry date on the
-  database page; after it passes you recreate the database or move to a paid
-  plan. Don't put anything you can't recreate in it.
-- **Uploaded images don't survive a redeploy.** The filesystem is ephemeral, so
-  `media/` is wiped each deploy. Only `STATIC_ROOT` (collected at build time)
-  persists. For permanent image hosting you'd add S3 or Cloudinary.
+Point the frontend at your API first: open
+[`frontend/js/api.js`](frontend/js/api.js) and set `HOSTED_API_URL` to
+`https://USERNAME.pythonanywhere.com/api`, then commit and push.
 
-### Deploying somewhere else
+In the repo on GitHub: **Settings → Pages → Source → GitHub Actions**. That's
+the only click needed — [the workflow](.github/workflows/deploy-frontend.yml)
+publishes `frontend/` on every push to `main`.
 
-Nothing here is Render-specific beyond `render.yaml`. Any host works if you:
+The site appears at `https://USERNAME.github.io/coworking_space_booking/`, works
+on phones, and updates itself whenever you push.
 
-- run `backend/build.sh` (or its four commands) at build time
+### Keeping it alive
+
+- **The free web app needs renewing every three months.** PythonAnywhere emails
+  a reminder; one click on the Web tab extends it. Miss it and the site is
+  disabled until you click — your data is untouched either way.
+- **Uploaded images do persist** here (unlike ephemeral hosts), so spaces keep
+  their photos.
+- **There's a daily CPU allowance.** A portfolio project won't come close.
+
+### Deploying somewhere else instead
+
+Nothing is host-specific except the WSGI file. The repo also carries a
+[`render.yaml`](render.yaml) blueprint for Render, which trades PythonAnywhere's
+manual setup for automatic deploys — at the cost of sleeping after ~15 minutes
+idle and a free database that expires.
+
+Any host works if you:
+
+- install `requirements.txt`, then run `collectstatic` and `migrate`
 - start with `gunicorn config.wsgi:application`
-- set `DEBUG=False`, a long random `SECRET_KEY`, and `ALLOWED_HOSTS` to your
-  domain
-- set `DATABASE_URL` to a Postgres connection string — without it Django falls
-  back to SQLite, which most hosts wipe on restart
+- set `DEBUG=False`, a long random `SECRET_KEY`, and `ALLOWED_HOSTS`
+- set `DATABASE_URL` to a Postgres connection string if the host's filesystem
+  is ephemeral — otherwise SQLite is fine and simpler
 
 `DEBUG=False` also switches on HTTPS redirects, secure cookies and HSTS, and
-trusts the `X-Forwarded-Proto` header that platform proxies send.
+trusts the `X-Forwarded-Proto` header that platform proxies send. If a host
+doesn't forward that header you'll get a redirect loop — set
+`SECURE_SSL_REDIRECT=False` in `.env` to break it.
 
 ## Design system
 
