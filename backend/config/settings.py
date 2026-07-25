@@ -142,12 +142,25 @@ SIMPLE_JWT = {
 }
 
 # ---------------------------------------------------------------------------
-# CORS (Vanilla JS frontend served from a different origin/port)
+# CORS
+#
+# This is a public, open API — any site should be able to call it from the
+# browser, not just the bundled frontend. So origins are unrestricted by
+# default. To lock it down (e.g. in production), list the permitted origins in
+# CORS_ALLOWED_ORIGINS in .env and that list takes over.
 # ---------------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:5500,http://127.0.0.1:5500"
-).split(",")
-CORS_ALLOW_CREDENTIALS = True
+_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
+
+if _cors_origins:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_origins.split(",") if origin.strip()]
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
+
+# Auth travels in the Authorization header, never in cookies, so credentialed
+# cross-origin requests aren't needed — and the CORS spec forbids pairing them
+# with a wildcard origin anyway.
+CORS_ALLOW_CREDENTIALS = False
 
 # ---------------------------------------------------------------------------
 # drf-yasg (Swagger / Redoc)

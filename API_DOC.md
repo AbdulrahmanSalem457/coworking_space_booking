@@ -179,6 +179,44 @@ Auth and permission failures use `detail`:
 > user before permissions run, so other people's bookings are invisible rather
 > than forbidden.
 
+### CORS — using this API from your own project
+
+The API accepts browser requests from **any origin**. Drop it straight into
+your own frontend on any host or port:
+
+```js
+const res = await fetch("http://127.0.0.1:8000/api/spaces/");
+const data = await res.json();
+```
+
+Authenticated calls work the same way — the token goes in a header:
+
+```js
+const res = await fetch("http://127.0.0.1:8000/api/bookings/", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${accessToken}`,
+  },
+  body: JSON.stringify({
+    space: "space-1",
+    date: "2026-07-26",
+    start_time: "09:00",
+    end_time: "11:00",
+  }),
+});
+```
+
+Do **not** set `credentials: "include"` — this API never uses cookies, and
+credentialed mode is incompatible with the wildcard origin. The bearer token is
+all the auth it needs.
+
+CORS restricts browsers only. Server-side clients — `curl`, Postman, Python,
+another backend — were never affected by it.
+
+To restrict origins later, set `CORS_ALLOWED_ORIGINS` in `backend/.env` to a
+comma-separated list; leaving it empty keeps the API open.
+
 ### Dates and times
 
 | Field | Format | Example |
