@@ -3,7 +3,20 @@
  * Nothing in dom.js or the page scripts talks to fetch() directly.
  */
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+/**
+ * Where the API lives.
+ *
+ * Served from localhost it talks to a local backend; served from anywhere else
+ * it falls back to the hosted one. Point it somewhere specific by setting the
+ * global before this module loads:
+ *
+ *   <script>window.API_BASE_URL = "https://your-api.onrender.com/api";</script>
+ */
+const HOSTED_API_URL = "https://coworking-api.onrender.com/api";
+const LOCAL_API_URL = "http://127.0.0.1:8000/api";
+
+const isLocalHost = ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
+const API_BASE_URL = window.API_BASE_URL ?? (isLocalHost ? LOCAL_API_URL : HOSTED_API_URL);
 
 const TOKEN_KEYS = { access: "csb_access_token", refresh: "csb_refresh_token", username: "csb_username" };
 

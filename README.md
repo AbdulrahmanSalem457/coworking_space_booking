@@ -131,9 +131,75 @@ python -m http.server 5500
 
 Then open `http://127.0.0.1:5500/index.html`.
 
-If you serve the frontend from a different port, update
-`CORS_ALLOWED_ORIGINS` in `backend/.env` and `API_BASE_URL` at the top of
-`frontend/js/api.js` to match.
+The frontend picks its API automatically: served from localhost it calls the
+local backend, served from anywhere else it calls the hosted one. To point it
+at a specific API, set the global before the module loads:
+
+```html
+<script>window.API_BASE_URL = "https://your-api.onrender.com/api";</script>
+```
+
+## Deploying the API
+
+The API is CORS-open, so once it's hosted anyone can call it from their own
+site's JavaScript — no backend of their own required.
+
+### Deploy to Render
+
+The repo ships a [`render.yaml`](render.yaml) blueprint that creates the web
+service and a Postgres database together.
+
+1. Push this repo to your GitHub account (already done if you cloned it from
+   there).
+2. Sign in at [render.com](https://render.com) and choose **New → Blueprint**.
+3. Connect the repository. Render reads `render.yaml` and shows what it will
+   create: a free web service plus a free Postgres instance.
+4. It prompts for the three values marked `sync: false` — enter the admin
+   account you want created:
+   - `ADMIN_USERNAME`
+   - `ADMIN_EMAIL`
+   - `ADMIN_PASSWORD`
+5. Click **Apply**. The first build runs
+   [`backend/build.sh`](backend/build.sh): installs dependencies, collects
+   static files, applies migrations, and creates the superuser.
+
+When it finishes you get a URL like `https://coworking-api.onrender.com`:
+
+| | |
+|---|---|
+| API root | `https://coworking-api.onrender.com/api/` |
+| Swagger UI | `https://coworking-api.onrender.com/swagger/` |
+| Django admin | `https://coworking-api.onrender.com/admin/` |
+
+Finally, update `HOSTED_API_URL` at the top of
+[`frontend/js/api.js`](frontend/js/api.js) to your real URL — Render appends a
+suffix if the service name is taken, so it may not match the default exactly.
+
+### Things to know about the free tier
+
+- **The service sleeps after ~15 minutes of no traffic.** The next request
+  wakes it and takes roughly a minute to answer. Requests after that are
+  normal speed. Worth mentioning if you're demoing it to someone.
+- **Free Postgres instances expire.** Render shows the expiry date on the
+  database page; after it passes you recreate the database or move to a paid
+  plan. Don't put anything you can't recreate in it.
+- **Uploaded images don't survive a redeploy.** The filesystem is ephemeral, so
+  `media/` is wiped each deploy. Only `STATIC_ROOT` (collected at build time)
+  persists. For permanent image hosting you'd add S3 or Cloudinary.
+
+### Deploying somewhere else
+
+Nothing here is Render-specific beyond `render.yaml`. Any host works if you:
+
+- run `backend/build.sh` (or its four commands) at build time
+- start with `gunicorn config.wsgi:application`
+- set `DEBUG=False`, a long random `SECRET_KEY`, and `ALLOWED_HOSTS` to your
+  domain
+- set `DATABASE_URL` to a Postgres connection string — without it Django falls
+  back to SQLite, which most hosts wipe on restart
+
+`DEBUG=False` also switches on HTTPS redirects, secure cookies and HSTS, and
+trusts the `X-Forwarded-Proto` header that platform proxies send.
 
 ## Design system
 

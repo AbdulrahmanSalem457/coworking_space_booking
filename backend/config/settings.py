@@ -1,10 +1,15 @@
 """
 Django settings for the Coworking Space Booking Platform.
+
+Runs unchanged locally (SQLite, DEBUG on) and on a host like Render, where
+DATABASE_URL, RENDER_EXTERNAL_HOSTNAME and DEBUG=False are supplied as
+environment variables.
 """
 import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,7 +18,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-me")
 DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+
+# Render injects the service's public hostname at runtime; trust it so the
+# deployment works without hardcoding the URL anywhere.
+RENDER_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_HOSTNAME)
+
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{host}" for host in ALLOWED_HOSTS if host not in ("localhost", "127.0.0.1", "*")
+]
 
 # ---------------------------------------------------------------------------
 # Applications
@@ -45,6 +61,9 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serves collected static files (including Swagger's own CSS/JS) in
+    # production, where there's no separate web server in front of Django.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -75,14 +94,25 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ---------------------------------------------------------------------------
-# Database (SQLite for local/dev; swap to Postgres in production)
+# Database — SQLite locally, whatever DATABASE_URL points at when hosted.
+#
+# Hosts like Render run on an ephemeral filesystem, so a SQLite file there
+# would be wiped on every restart or redeploy. Attaching a managed Postgres
+# instance sets DATABASE_URL and this picks it up automatically.
 # ---------------------------------------------------------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ---------------------------------------------------------------------------
 # Auth
@@ -112,10 +142,34 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------------------------------------------------------------------------
+# Production hardening — only applied when DEBUG is off, so local dev over
+# plain HTTP is unaffected.
+# ---------------------------------------------------------------------------
+if not DEBUG:
+    # Render terminates TLS at its proxy and forwards this header; without it
+    # Django would think every request arrived over plain HTTP and redirect
+    # forever.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+    # Managed hosts serve this domain over HTTPS only, so HSTS is safe here.
+    # Deliberately without includeSubDomains/preload — those are the parts that
+    # are painful to undo, and neither is needed for a single API host.
+    SECURE_HSTS_SECONDS = 31536000
 
 # ---------------------------------------------------------------------------
 # Django REST Framework

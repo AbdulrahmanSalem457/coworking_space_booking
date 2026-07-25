@@ -2,10 +2,13 @@
 
 Complete reference for every endpoint the backend exposes.
 
-- **Base URL:** `http://127.0.0.1:8000/api`
-- **Interactive docs:** [Swagger UI](http://127.0.0.1:8000/swagger/) · [Redoc](http://127.0.0.1:8000/redoc/)
+- **Base URL:** `http://127.0.0.1:8000/api` locally, or `https://<your-app>.onrender.com/api` once deployed — see [Deploying the API](README.md#deploying-the-api)
+- **Interactive docs:** `/swagger/` · `/redoc/`
 - **Raw schema:** `GET /swagger.json` (or `/swagger.yaml`)
 - **Format:** JSON in, JSON out (the one exception is uploading a space image — see [Spaces](#3-spaces))
+
+Every path below is relative to the base URL. `GET /spaces/` means
+`GET http://127.0.0.1:8000/api/spaces/` locally.
 
 ---
 
@@ -182,17 +185,23 @@ Auth and permission failures use `detail`:
 ### CORS — using this API from your own project
 
 The API accepts browser requests from **any origin**. Drop it straight into
-your own frontend on any host or port:
+your own frontend on any host or port — no backend of your own needed:
 
 ```js
-const res = await fetch("http://127.0.0.1:8000/api/spaces/");
+const API = "https://coworking-api.onrender.com/api";   // your deployed URL
+
+const res = await fetch(`${API}/spaces/`);
 const data = await res.json();
 ```
+
+> A locally-run API lives at `http://127.0.0.1:8000` — an address that only
+> exists on the machine running it. For other people to reach it, it has to be
+> deployed; see [Deploying the API](README.md#deploying-the-api).
 
 Authenticated calls work the same way — the token goes in a header:
 
 ```js
-const res = await fetch("http://127.0.0.1:8000/api/bookings/", {
+const res = await fetch(`${API}/bookings/`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
