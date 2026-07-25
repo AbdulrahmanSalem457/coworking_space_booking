@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign up &middot; Nest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">🌿 Nest</a>
+      <nav class="nav">
+        <a href="index.html">Spaces</a>
+        <span id="nav-guest-links">
+          <a href="login.html">Log in</a>
+          <a class="btn btn--primary btn--small" href="register.html">Sign up</a>
+        </span>
+        <span id="nav-user-links" hidden>
+          <a href="my-bookings.html">My Bookings</a>
+          <span id="nav-username" class="nav__greeting"></span>
+          <a href="#" id="nav-logout">Log out</a>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container container--narrow">
+    <section class="auth-card">
+      <h1>Create your account</h1>
+      <p class="auth-card__subtitle">Join to start booking spaces in seconds.</p>
+
+      <form id="register-form" class="auth-form">
+        <label>
+          Username
+          <input type="text" name="username" required autocomplete="username" />
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" required autocomplete="email" />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" required minlength="8" autocomplete="new-password" />
+        </label>
+        <label>
+          Confirm password
+          <input type="password" name="password_confirm" required minlength="8" autocomplete="new-password" />
+        </label>
+        <button type="submit" class="btn btn--primary btn--full">Sign up</button>
+      </form>
+
+      <p class="auth-card__footer">Already have an account? <a href="login.html">Log in</a></p>
+    </section>
+  </main>
+
+  <script type="module" src="js/pages/register.js"></script>
+</body>
+</html>

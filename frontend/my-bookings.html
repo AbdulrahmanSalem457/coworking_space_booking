@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Bookings &middot; Nest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html">🌿 Nest</a>
+      <nav class="nav">
+        <a href="index.html">Spaces</a>
+        <span id="nav-guest-links">
+          <a href="login.html">Log in</a>
+          <a class="btn btn--primary btn--small" href="register.html">Sign up</a>
+        </span>
+        <span id="nav-user-links" hidden>
+          <a href="my-bookings.html">My Bookings</a>
+          <span id="nav-username" class="nav__greeting"></span>
+          <a href="#" id="nav-logout">Log out</a>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>My Bookings</h1>
+    <p class="page-subtitle">Everything you've reserved, in one place.</p>
+
+    <div id="bookings-list" class="bookings-list"></div>
+  </main>
+
+  <script type="module" src="js/pages/myBookings.js"></script>
+</body>
+</html>
