@@ -76,17 +76,29 @@ control.
 
 ### Key endpoints
 
-| Method | Path                       | Auth        | Purpose                          |
-|--------|----------------------------|-------------|-----------------------------------|
-| POST   | `/api/auth/register/`      | none        | Create an account                |
-| POST   | `/api/auth/login/`         | none        | Obtain JWT access + refresh       |
-| POST   | `/api/auth/refresh/`       | none        | Refresh an access token           |
-| GET    | `/api/auth/me/`            | JWT         | Current user profile              |
-| GET    | `/api/spaces/`              | none        | List/search/filter spaces         |
-| GET    | `/api/spaces/{slug}/`       | none        | Space detail                      |
-| POST   | `/api/bookings/`            | JWT         | Create a booking (overlap-checked)|
-| GET    | `/api/bookings/`             | JWT         | Your own bookings (staff see all) |
-| DELETE | `/api/bookings/{id}/`        | JWT (owner) | Cancel a booking                  |
+Full reference — every endpoint, parameter, error and business rule — is in
+**[API_DOC.md](API_DOC.md)**.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/auth/register/` | none | Create an account |
+| POST | `/api/auth/login/` | none | Obtain JWT access + refresh |
+| POST | `/api/auth/refresh/` | none | Refresh an access token |
+| GET | `/api/auth/me/` | JWT | Current user profile |
+| GET | `/api/spaces/` | none | List/search/filter spaces |
+| GET | `/api/spaces/choices/` | none | `{slug, name}` list for pickers |
+| GET | `/api/spaces/{slug}/` | none | Space detail |
+| POST | `/api/spaces/` | staff/owner | Create a space |
+| GET | `/api/bookings/` | JWT | Your own bookings (staff see all) |
+| POST | `/api/bookings/` | JWT | Create a booking (overlap-checked) |
+| DELETE | `/api/bookings/{id}/` | JWT (owner) | Delete a booking |
+| PATCH | `/api/bookings/{id}/status/` | staff | Confirm or cancel |
+| POST | `/api/bookings/{id}/check-in/` | JWT (owner) | Check in — gated on start time |
+| POST | `/api/bookings/{id}/check-out/` | JWT (owner) | Check out + record payment |
+| GET | `/api/payments/` | JWT | Your payment history (staff see all) |
+
+Bookings reference a space by its **slug** (`"space": "space-1"`), which you can
+look up from `/api/spaces/choices/`.
 
 ### Overbooking prevention
 
