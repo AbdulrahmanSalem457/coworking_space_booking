@@ -184,13 +184,18 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "simple": {
-            "format": "[{levelname}] {message}",
+            "format": "[{asctime}] {levelname} {message}",
+            "datefmt": "%H:%M:%S",
             "style": "{",
         },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            # StreamHandler defaults to stderr, which some terminals and
+            # wrappers swallow. Django's own startup banner goes to stdout, so
+            # send request logs there too — they then always show up together.
+            "stream": "ext://sys.stdout",
             "formatter": "simple",
         },
     },
