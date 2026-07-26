@@ -141,6 +141,9 @@ at a specific API, set the global before the module loads:
 
 ## Hosting it online
 
+**Live API:** <https://s3ody.pythonanywhere.com/api/> ·
+[Swagger](https://s3ody.pythonanywhere.com/swagger/)
+
 Two free pieces, deployed separately:
 
 | Part | Host | Result |
@@ -163,15 +166,21 @@ git clone https://github.com/AbdulrahmanSalem457/coworking_space_booking.git
 cd coworking_space_booking/backend
 ```
 
-**Create the virtualenv** (3.11 or whichever Python they currently offer):
+**Create the virtualenv.** Let the shell resolve the interpreter rather than
+hardcoding a path — PythonAnywhere's Pythons don't all live under `/usr/bin`,
+and pointing a virtualenv at the wrong one produces a broken environment that
+fails with `ModuleNotFoundError: No module named '_posixsubprocess'`:
 
 ```bash
-mkvirtualenv --python=/usr/bin/python3.11 coworking
+mkvirtualenv --python=$(which python3.11) coworking
 pip install -r requirements.txt
 ```
 
 Note the path it prints — normally `/home/USERNAME/.virtualenvs/coworking`.
 You'll paste it into the Web tab shortly.
+
+> If you already made a broken one, delete it and start over:
+> `deactivate; rmvirtualenv coworking`
 
 **Write the environment file.** Still in `backend/`:
 
@@ -249,9 +258,10 @@ on phones, and updates itself whenever you push.
 
 ### Keeping it alive
 
-- **The free web app needs renewing every three months.** PythonAnywhere emails
-  a reminder; one click on the Web tab extends it. Miss it and the site is
-  disabled until you click — your data is untouched either way.
+- **The free web app needs renewing monthly.** The Web tab shows a "best before"
+  date and a **Run until 1 month from today** button; one click extends it, and
+  they email a week beforehand. Miss it and the site is disabled until you click
+  — your data is untouched either way.
 - **Uploaded images do persist** here (unlike ephemeral hosts), so spaces keep
   their photos.
 - **There's a daily CPU allowance.** A portfolio project won't come close.

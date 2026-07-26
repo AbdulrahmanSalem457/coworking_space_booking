@@ -14,7 +14,7 @@
  *
  * After deploying, change HOSTED_API_URL below to your own API's address.
  */
-const HOSTED_API_URL = "https://CHANGE-ME.pythonanywhere.com/api";
+const HOSTED_API_URL = "https://s3ody.pythonanywhere.com/api";
 const LOCAL_API_URL = "http://127.0.0.1:8000/api";
 
 const isLocalHost = ["localhost", "127.0.0.1", ""].includes(window.location.hostname);
